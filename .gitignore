@@ -2,11 +2,12 @@
 env/
 .venv/
 venv/
-.env
+backend/.env
 data/
 pdfs/
 books/
-chroma/
+backend/upload
+backend/chroma/
 chroma1/
 backend/venv/
 # Ignore Jupyter checkpoints
