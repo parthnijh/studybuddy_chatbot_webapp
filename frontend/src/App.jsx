@@ -50,11 +50,16 @@ function App() {
     setLoading(true);
 
     try {
+      const payload={
+        "question":question,
+        "chat_history":messages
+      }
       const res = await fetch("http://127.0.0.1:5000/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify(payload),
       });
+      console.log(payload)
       const data = await res.json();
 
       setMessages((prev) => [
