@@ -16,25 +16,42 @@ app=Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 import os
 
+upload_status = {}
 
 
-embeddings=GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001",google_api_key=os.getenv("GOOGLE_API_KEY"))
-vectorstore=Chroma(
-        persist_directory="chroma",
+def get_embeddings():
+    return GoogleGenerativeAIEmbeddings(
+        model="models/gemini-embedding-001",
+        google_api_key=os.getenv("GOOGLE_API_KEY")
+    )
+
+def get_vectorstore():
+    embeddings = get_embeddings()
+    return Chroma(
+        persist_directory="chroma1",
         collection_name="studybuddy",
         embedding_function=embeddings
     )
+
 
 def process_pdf(file_path):
     try:
         loader = PyPDFLoader(file_path)
         splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+        vectorstore=get_vectorstore()
         for doc in loader.load():
             chunks = splitter.split_text(doc.page_content)
-            vectorstore.add_texts(chunks)
+            
+            
+            for i in range(0, len(chunks), 10):
+                batch = chunks[i:i + 10]
+                vectorstore.add_texts(batch)
+    except Exception as e:
+        print("Error processing PDF:", e)
     finally:
         if os.path.exists(file_path):
             os.remove(file_path)
+
 
 @app.route("/upload", methods=["POST"])
 def upload():
@@ -47,16 +64,29 @@ def upload():
     file_path = os.path.join(upload_dir, file.filename)
     file.save(file_path)
 
-   
-    threading.Thread(target=process_pdf, args=(file_path,)).start()
+    upload_status[file.filename] = "processing"
 
-    
-    return jsonify({"status": "processing started"}), 202
+    def process_wrapper():
+        try:
+            process_pdf(file_path)
+            upload_status[file.filename] = "done"
+        except Exception:
+            upload_status[file.filename] = "error"
+
+    threading.Thread(target=process_wrapper).start()
+
+    return jsonify({"status": "processing started", "filename": file.filename}), 202
+
+@app.route("/status/<filename>", methods=["GET"])
+def get_status(filename):
+    status = upload_status.get(filename, "not found")
+    return jsonify({"status": status})
 
   
 
 @app.route("/ask",methods=["POST"])
 def ask():
+    vectorstore=get_vectorstore()
     parser=StrOutputParser()
     ret=vectorstore.as_retriever(search_type="similarity",search_kwargs={"k":6})
     data = request.get_json()

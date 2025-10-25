@@ -16,31 +16,48 @@ function App() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, loading]);
-  const handleUpload = async () => {
-    if (!file) return alert("Please select a PDF first!");
+ const handleUpload = async () => {
+  if (!file) return alert("Please select a PDF first!");
 
-    setUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
+  setUploading(true);
+  const formData = new FormData();
+  formData.append("file", file);
 
-    try {
-      const res = await fetch("https://studybuddy-chatbot-webapp.onrender.com/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
+  try {
+    const res = await fetch("https://studybuddy-chatbot-webapp.onrender.com/upload", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
 
-      if (data.status === "processing started") {
-        setIsUploaded(true);
-       
-      }
-    } catch (err) {
-      console.error(err);
-      alert("❌ Error uploading file");
-    } finally {
-      setUploading(false);
+    if (data.status === "processing started" && data.filename) {
+      // Poll for processing completion
+      const pollStatus = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`https://studybuddy-chatbot-webapp.onrender.com/status/${data.filename}`);
+          const statusData = await statusRes.json();
+          
+          if (statusData.status === "done") {
+            clearInterval(pollStatus);
+            setIsUploaded(true);  // Enable chat component
+            alert("✅ PDF is ready to use!");
+          } else if (statusData.status === "error") {
+            clearInterval(pollStatus);
+            alert("❌ Error processing PDF");
+          }
+        } catch (err) {
+          console.error("Error checking status:", err);
+        }
+      }, 2000); // poll every 2 seconds
     }
-  };
+  } catch (err) {
+    console.error(err);
+    alert("❌ Error uploading file");
+  } finally {
+    setUploading(false);
+  }
+};
+
 
   const handleAsk = async () => {
     if (!question.trim()) return;
