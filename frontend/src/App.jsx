@@ -69,24 +69,25 @@ const handleUpload = async () => {
   const handleAsk = async () => {
   if (!question.trim()) return;
 
-  // Add user message to chat
-  setMessages((prev) => [...prev, { sender: "user", text: question }]);
-  
-  // Prepare payload *before* sending
-  const payload = {
-    question: question,
-    chat_history: messages
-  };
+  const userMessage = { sender: "user", text: question };
+  const updatedChatHistory = [...messages, userMessage]; // include latest message
 
+  setMessages(updatedChatHistory); // update UI immediately
   setQuestion("");
   setLoading(true);
 
   try {
+    const payload = {
+      question: question,
+      chat_history: updatedChatHistory
+    };
+
     const res = await fetch("https://studybuddy-chatbot-webapp.onrender.com/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload), // use correct payload
+      body: JSON.stringify(payload),
     });
+
     const data = await res.json();
 
     setMessages((prev) => [
