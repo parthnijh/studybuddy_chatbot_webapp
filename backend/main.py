@@ -12,7 +12,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 app=Flask(__name__)
-CORS(app,resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 import os
 
 
@@ -129,4 +129,3 @@ assistant: I don’t know based on the provided context."""
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
-
