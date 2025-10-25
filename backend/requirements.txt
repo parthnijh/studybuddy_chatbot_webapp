@@ -32,4 +32,7 @@ streamlit
 
 # Typing utilities
 typing-extensions
-Flask
+
+flask
+gunicorn
+flask-cors
