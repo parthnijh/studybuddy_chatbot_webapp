@@ -67,34 +67,43 @@ const handleUpload = async () => {
 
 
   const handleAsk = async () => {
-    if (!question.trim()) return;
+  if (!question.trim()) return;
 
-    setMessages((prev) => [...prev, { sender: "user", text: question }]);
-    setQuestion("");
-    setLoading(true);
-
-    try {
-      const res = await fetch("https://studybuddy-chatbot-webapp.onrender.com/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
-      });
-      const data = await res.json();
-
-      setMessages((prev) => [
-        ...prev,
-        { sender: "bot", text: data.answer || "I don't know." },
-      ]);
-    } catch (err) {
-      console.error(err);
-      setMessages((prev) => [
-        ...prev,
-        { sender: "bot", text: "❌ Error fetching response." },
-      ]);
-    } finally {
-      setLoading(false);
-    }
+  // Add user message to chat
+  setMessages((prev) => [...prev, { sender: "user", text: question }]);
+  
+  // Prepare payload *before* sending
+  const payload = {
+    question: question,
+    chat_history: messages
   };
+
+  setQuestion("");
+  setLoading(true);
+
+  try {
+    const res = await fetch("https://studybuddy-chatbot-webapp.onrender.com/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload), // use correct payload
+    });
+    const data = await res.json();
+
+    setMessages((prev) => [
+      ...prev,
+      { sender: "bot", text: data.answer || "I don't know." },
+    ]);
+  } catch (err) {
+    console.error(err);
+    setMessages((prev) => [
+      ...prev,
+      { sender: "bot", text: "❌ Error fetching response." },
+    ]);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
