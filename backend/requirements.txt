@@ -8,7 +8,7 @@ openai
 # Anthropic Integration
 langchain-anthropic
 langchain-chroma
-git+https://github.com/hwchase17/langchain-community.git  # <-- install from GitHub
+langchain-community  # <-- install from GitHub
 
 # Google Gemini (PaLM) Integration
 langchain-google-genai
@@ -36,3 +36,4 @@ typing-extensions
 flask
 gunicorn
 flask-cors
+pypdf
