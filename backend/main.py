@@ -8,6 +8,7 @@ from langchain_core.prompts import PromptTemplate,ChatPromptTemplate,MessagesPla
 from langchain_core.messages import HumanMessage,AIMessage
 from langchain_core.runnables import RunnableLambda,RunnablePassthrough,RunnableParallel
 from flask_cors import CORS
+import threading
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -23,29 +24,35 @@ vectorstore=Chroma(
         collection_name="studybuddy",
         embedding_function=embeddings
     )
-@app.route("/upload",methods=["POST"])
 
+def process_pdf(file_path):
+    try:
+        loader = PyPDFLoader(file_path)
+        splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+        for doc in loader.load():
+            chunks = splitter.split_text(doc.page_content)
+            vectorstore.add_texts(chunks)
+    finally:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+@app.route("/upload", methods=["POST"])
 def upload():
-    file=request.files.get("file")
-    if(not file):
-        return  jsonify({"status":"file not found "})
-    filepath = os.path.join("upload/", file.filename)
-    file.save(filepath)
-    
- 
-    loader=PyPDFLoader(file_path=filepath)
+    file = request.files.get("file")
+    if not file:
+        return jsonify({"status": "file not found"}), 400
 
-    document=loader.load()
+    upload_dir = "upload"
+    os.makedirs(upload_dir, exist_ok=True)
+    file_path = os.path.join(upload_dir, file.filename)
+    file.save(file_path)
 
-    splitter=RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200)
-    chunks=[]
-    for doc in document:
-        chunks.extend(splitter.split_text(doc.page_content))
+   
+    threading.Thread(target=process_pdf, args=(file_path,)).start()
+
     
-    vectorstore.add_texts(chunks)
-    if os.path.exists(filepath):
-        os.remove(filepath)
-    return jsonify({"status":"uploaded"})
+    return jsonify({"status": "processing started"}), 202
+
   
 
 @app.route("/ask",methods=["POST"])
