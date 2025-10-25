@@ -34,7 +34,9 @@ def upload():
     
  
     loader=PyPDFLoader(file_path=filepath)
+
     document=loader.load()
+
     splitter=RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200)
     chunks=[]
     for doc in document:
@@ -42,8 +44,9 @@ def upload():
     
     vectorstore.add_texts(chunks)
     if os.path.exists(filepath):
-            os.remove(filepath)
+        os.remove(filepath)
     return jsonify({"status":"uploaded"})
+  
 
 @app.route("/ask",methods=["POST"])
 def ask():
@@ -122,3 +125,6 @@ assistant: I don’t know based on the provided context."""
 
 
 
+
+if __name__ == "__main__":
+    app.run(debug=True)

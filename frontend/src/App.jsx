@@ -24,7 +24,7 @@ function App() {
     formData.append("file", file);
 
     try {
-      const res = await fetch("http://127.0.0.1:5000/upload", {
+      const res = await fetch("https://studybuddy-chatbot-webapp.onrender.com/upload", {
         method: "POST",
         body: formData,
       });
@@ -50,7 +50,7 @@ function App() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:5000/ask", {
+      const res = await fetch("https://studybuddy-chatbot-webapp.onrender.com/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question }),
