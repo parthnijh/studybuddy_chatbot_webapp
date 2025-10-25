@@ -30,7 +30,7 @@ function App() {
       });
       const data = await res.json();
 
-      if (data.status === "uploaded") {
+      if (data.status === "processing started") {
         setIsUploaded(true);
        
       }
