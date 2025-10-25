@@ -1,8 +1,6 @@
 # LangChain Core
 langchain==0.3.25
 
-
-
 # OpenAI Integration
 langchain-openai
 openai
@@ -10,7 +8,8 @@ openai
 # Anthropic Integration
 langchain-anthropic
 langchain-chroma
-langchain-community
+git+https://github.com/hwchase17/langchain-community.git  # <-- install from GitHub
+
 # Google Gemini (PaLM) Integration
 langchain-google-genai
 google-generativeai
@@ -33,6 +32,7 @@ streamlit
 # Typing utilities
 typing-extensions
 
+# Flask and deployment
 flask
 gunicorn
 flask-cors
