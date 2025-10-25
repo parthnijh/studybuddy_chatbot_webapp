@@ -18,6 +18,13 @@ import os
 
 upload_status = {}
 
+import shutil
+
+def reset_vectorstore(folder="chroma1"):
+    """Delete existing Chroma folder to reset embeddings."""
+    if os.path.exists(folder):
+        shutil.rmtree(folder)
+        print(f"Deleted existing vectorstore folder: {folder}")
 
 def get_embeddings():
     return GoogleGenerativeAIEmbeddings(
@@ -36,6 +43,7 @@ def get_vectorstore():
 
 def process_pdf(file_path):
     try:
+        reset_vectorstore("chroma1")
         loader = PyPDFLoader(file_path)
         splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         vectorstore=get_vectorstore()
@@ -60,7 +68,7 @@ def upload():
         return jsonify({"status": "file not found"}), 400
 
     upload_dir = "upload"
-    os.makedirs(upload_dir, exist_ok=True)
+    
     file_path = os.path.join(upload_dir, file.filename)
     file.save(file_path)
 
