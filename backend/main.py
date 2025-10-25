@@ -4,7 +4,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings,ChatGoogleGenerativeAI
 from langchain_chroma import Chroma
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate,ChatPromptTemplate,MessagesPlaceholder
+from langchain_core.messages import HumanMessage,AIMessage
 from langchain_core.runnables import RunnableLambda,RunnablePassthrough,RunnableParallel
 from flask_cors import CORS
 import os
@@ -40,18 +41,31 @@ def upload():
         chunks.extend(splitter.split_text(doc.page_content))
     
     vectorstore.add_texts(chunks)
+    if os.path.exists(filepath):
+            os.remove(filepath)
     return jsonify({"status":"uploaded"})
 
 @app.route("/ask",methods=["POST"])
 def ask():
     parser=StrOutputParser()
     ret=vectorstore.as_retriever(search_type="similarity",search_kwargs={"k":6})
-    prompt=PromptTemplate(template='''You are StudyBuddy, a friendly and intelligent AI assistant.
-
-You are StudyBuddy, a friendly and intelligent AI assistant.
+    data = request.get_json()
+    frontend_chat=data.get("chat_history",[])
+    chat_history=[]
+    for message in frontend_chat:
+        if(message["sender"]=="user"):
+            chat_history.append(HumanMessage(message["text"]))
+        else:
+            chat_history.append(AIMessage(message["text"]))
+    print(chat_history)
+    prompt=ChatPromptTemplate( messages=[
+        (
+            "system",
+            """You are StudyBuddy, a friendly and intelligent AI assistant.
 
 Your task:
 - Carefully read the user’s query: {query}
+- Use the chat history to maintain context of the conversation.
 - Use the following context to answer document-based or knowledge-based questions only:
   {context}
 
@@ -59,7 +73,8 @@ Rules:
 1. If the answer to the query can be clearly found within the context, answer it concisely and accurately using that information.
 2. If the answer is not available or cannot be inferred from the provided context, respond with:
    "I don’t know based on the provided context."
-3. If the user is not asking a question — for example, if they greet you, thank you, or just chat casually — respond naturally and warmly like a human assistant.
+3. use the chat history as a reference too before saying i dont know.
+4. If the user is not asking a question — for example, if they greet you, thank you, or just chat casually — respond naturally and warmly like a human assistant.
 
 Examples:
 user: Hi  
@@ -71,28 +86,39 @@ assistant: I’m just a bunch of code, but feeling great today! How about you?
 user: Thanks!  
 assistant: Anytime — happy to help!
 
+user : do you like () ?
+assistant : i am an ai ,so i dont have opinions however i would love to hear yours
 user: What does the document say about renewable energy policies?  
 assistant: (Answer using {context} only)
 
 user: Tell me something not in the document  
-assistant: I don’t know based on the provided context.
-
-''',input_variables=["query","context"])
-    data = request.get_json()
+assistant: I don’t know based on the provided context."""
+        ),
+        MessagesPlaceholder(variable_name="chat_history"),
+        ("human", "{query}")
+    ]
+)
+    
     query = data.get("question") 
+    
 
-   
-    palchain=RunnableParallel({
-    "context":ret,
-    "query":RunnablePassthrough()
-})
+    context=ret.invoke(query)
+#     palchain=RunnableParallel({
+#     "context":ret,
+#     "query":RunnablePassthrough(),
+#     "chat_history":RunnablePassthrough()
+# })
+    
+
     model=ChatGoogleGenerativeAI(model="gemini-2.5-flash",api_key=os.getenv("GOOGLE_API_KEY"))
-    chain=palchain | prompt | model |parser
-    result=chain.invoke(query)
+    
+    chain=prompt | model |parser
+    result=chain.invoke({
+    "query": query,
+    "context": context,         
+    "chat_history": chat_history 
+})
     return jsonify({"answer":result})
 
 
 
-
-if __name__ == "__main__":
-    app.run(debug=True)
