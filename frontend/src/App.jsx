@@ -39,7 +39,8 @@ function App() {
           
           if (statusData.status === "done") {
             clearInterval(pollStatus);
-            setUploading(false);  // Enable chat component
+            setIsUploaded(true);
+            setUploading(false); 
             alert("✅ PDF is ready to use!");
           } else if (statusData.status === "error") {
             clearInterval(pollStatus);
