@@ -39,11 +39,12 @@ function App() {
           
           if (statusData.status === "done") {
             clearInterval(pollStatus);
-            setIsUploaded(true);  // Enable chat component
+            setUploading(false);  // Enable chat component
             alert("✅ PDF is ready to use!");
           } else if (statusData.status === "error") {
             clearInterval(pollStatus);
             alert("❌ Error processing PDF");
+            setUploading(false);
           }
         } catch (err) {
           console.error("Error checking status:", err);
@@ -52,6 +53,7 @@ function App() {
     }
   } catch (err) {
     console.error(err);
+    setUploading(false);
     alert("❌ Error uploading file");
   } finally {
     setUploading(false);
