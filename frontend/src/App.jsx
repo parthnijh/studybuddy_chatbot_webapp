@@ -16,7 +16,7 @@ function App() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, loading]);
- const handleUpload = async () => {
+const handleUpload = async () => {
   if (!file) return alert("Please select a PDF first!");
 
   setUploading(true);
@@ -31,33 +31,37 @@ function App() {
     const data = await res.json();
 
     if (data.status === "processing started" && data.filename) {
-      // Poll for processing completion
-      const pollStatus = setInterval(async () => {
+      // Recursive polling function
+      const pollStatus = async () => {
         try {
           const statusRes = await fetch(`https://studybuddy-chatbot-webapp.onrender.com/status/${data.filename}`);
           const statusData = await statusRes.json();
-          
+
           if (statusData.status === "done") {
-            clearInterval(pollStatus);
             setIsUploaded(true);
-            setUploading(false); 
+            setUploading(false);
             alert("✅ PDF is ready to use!");
           } else if (statusData.status === "error") {
-            clearInterval(pollStatus);
-            alert("❌ Error processing PDF");
             setUploading(false);
+            alert("❌ Error processing PDF");
+          } else {
+            // Keep polling every 4 seconds
+            setTimeout(pollStatus, 4000);
           }
         } catch (err) {
           console.error("Error checking status:", err);
+          // Retry polling even if there was an error
+          setTimeout(pollStatus, 4000);
         }
-      }, 2000); // poll every 2 seconds
+      };
+
+      // Start polling
+      pollStatus();
     }
   } catch (err) {
     console.error(err);
     setUploading(false);
     alert("❌ Error uploading file");
-  } finally {
-    setUploading(false);
   }
 };
 
