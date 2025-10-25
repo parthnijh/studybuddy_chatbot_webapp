@@ -13,7 +13,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 app=Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "https://studybuddy-chatbot-webapp.vercel.app/"}})
+CORS(app, resources={r"/*": {"origins": "https://studybuddy-chatbot-webapp.vercel.app"}})
 import os
 
 upload_status = {}
