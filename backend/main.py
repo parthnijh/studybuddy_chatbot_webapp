@@ -13,11 +13,17 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 app=Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "https://studybuddy-chatbot-webapp.vercel.app"}})
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "https://studybuddy-chatbot-webapp.vercel.app",  # deployed frontend
+            "http://localhost:5173"                           # local frontend
+        ]
+    }
+})
 import os
 
 upload_status = {}
-
 import shutil
 
 def reset_vectorstore(folder="chroma1"):
@@ -33,6 +39,8 @@ def get_embeddings():
     )
 
 def get_vectorstore():
+    
+
     embeddings = get_embeddings()
     return Chroma(
         persist_directory="chroma1",
