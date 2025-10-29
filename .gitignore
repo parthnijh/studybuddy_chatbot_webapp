@@ -7,9 +7,8 @@ data/
 pdfs/
 books/
 
-backend/chroma/
-chroma1/
-backend/venv/
+
+
 # Ignore Jupyter checkpoints
 .ipynb_checkpoints/
 
