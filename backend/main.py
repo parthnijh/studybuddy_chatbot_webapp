@@ -55,7 +55,6 @@ def process_pdf(file_path):
             chunks.extend(splitter.split_text(doc.page_content))
             
         vectorstore.add_texts(chunks)
-        print(chunks[0])
     except Exception as e:
         print("Error processing PDF:", e)
     finally:
@@ -70,7 +69,8 @@ def upload():
         return jsonify({"status": "file not found"}), 400
 
     upload_dir = "upload"
-    
+    if not os.path.exists(upload_dir):
+        os.makedirs(upload_dir)
     file_path = os.path.join(upload_dir, file.filename)
     file.save(file_path)
 
