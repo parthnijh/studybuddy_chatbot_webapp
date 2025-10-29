@@ -26,11 +26,6 @@ import os
 upload_status = {}
 import shutil
 
-def reset_vectorstore(folder="chroma1"):
-    """Delete existing Chroma folder to reset embeddings."""
-    if os.path.exists(folder):
-        shutil.rmtree(folder)
-        print(f"Deleted existing vectorstore folder: {folder}")
 
 def get_embeddings():
     return GoogleGenerativeAIEmbeddings(
@@ -40,10 +35,10 @@ def get_embeddings():
 
 def get_vectorstore():
     
-
+   
     embeddings = get_embeddings()
     return Chroma(
-        persist_directory="chroma1",
+        persist_directory="chroma",
         collection_name="studybuddy",
         embedding_function=embeddings
     )
@@ -51,17 +46,16 @@ def get_vectorstore():
 
 def process_pdf(file_path):
     try:
-        reset_vectorstore("chroma1")
+        chunks=[]
+       
         loader = PyPDFLoader(file_path)
         splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         vectorstore=get_vectorstore()
         for doc in loader.load():
-            chunks = splitter.split_text(doc.page_content)
+            chunks.extend(splitter.split_text(doc.page_content))
             
-            
-            for i in range(0, len(chunks), 10):
-                batch = chunks[i:i + 10]
-                vectorstore.add_texts(batch)
+        vectorstore.add_texts(chunks)
+        print(chunks[0])
     except Exception as e:
         print("Error processing PDF:", e)
     finally:
@@ -84,7 +78,9 @@ def upload():
 
     def process_wrapper():
         try:
+            print("before")
             process_pdf(file_path)
+            print("after")
             upload_status[file.filename] = "done"
         except Exception:
             upload_status[file.filename] = "error"
@@ -95,7 +91,9 @@ def upload():
 
 @app.route("/status/<filename>", methods=["GET"])
 def get_status(filename):
+    
     status = upload_status.get(filename, "not found")
+    print(status)
     return jsonify({"status": status})
 
   
