@@ -6,7 +6,7 @@ backend/.env
 data/
 pdfs/
 books/
-backend/upload
+
 backend/chroma/
 chroma1/
 backend/venv/
